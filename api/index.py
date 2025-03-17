@@ -6,7 +6,7 @@ app = Flask(__name__)
 db_config = {
     'dbname': 'db2021153107',
     'user': 'a2021153107',
-    'password': 'postegres',
+    'password': 'a2021153107',
     'host': 'aid.estgoh.ipc.pt'
 }
 
