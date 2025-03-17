@@ -1,6 +1,14 @@
-from flask import Flask
+from flask import Flask, jsonify
+import psycopg2
 
 app = Flask(__name__)
+
+db_config = {
+    'dbname': 'db2021153107',
+    'user': 'a2021153107',
+    'password': 'postegres',
+    'host': 'aid.estgoh.ipc.pt'
+}
 
 @app.route('/')
 def home():
@@ -8,4 +16,12 @@ def home():
 
 @app.route('/about')
 def about():
-    return 'About'
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM utilizadores;')
+    emp = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    return jsonify(emp)
