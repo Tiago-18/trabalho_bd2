@@ -1,9 +1,11 @@
+import os
 from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
 import psycopg2
 import jwt
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mysecretkey')
 
 db_config = {
     'dbname': 'db2021153107',
@@ -76,10 +78,12 @@ def login_endpoint():
     user = login(data['email'], data['password'])
 
     if user is None:
-        return jsonify({"error": "Check credentials"}), 404
+        return jsonify({"error": "Credenciais Incorretas!"}), 404
 
     token = jwt.encode(
-        {'id': user['id'], 'exp': datetime.utcnow() + timedelta(minutes=5)}, app.config['SECRET_KEY'], algorithm='HS256'
+        {'id': user['id'], 'exp': datetime.utcnow() + timedelta(minutes=5)},
+        app.config['SECRET_KEY'],
+        algorithm='HS256'
     )
 
     user["token"] = token
@@ -91,7 +95,8 @@ def login(email, password):
     cursor = conn.cursor()
 
     try:
-        cursor.callproc('autenticacao', (email, password))
+        # Usa SELECT na função, passando os parâmetros
+        cursor.callproc("autenticacao", (email, password))
         user_dados = cursor.fetchone()
 
         if user_dados is None:
@@ -105,7 +110,7 @@ def login(email, password):
 
         return user
     except Exception as error:
-        print("Error while connecting to PostgreSQL", error)
+        print("Erro ao conectar ao PostgreSQL:", error)
         return None
     finally:
         cursor.close()
