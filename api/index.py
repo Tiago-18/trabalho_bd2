@@ -34,7 +34,7 @@ def registar_utilizador(nome, email, password, telefone, tipo):
 
 @app.route('/')
 def home():
-    return 'Hello, World! Tiago Freitas'
+    return 'Hello, World! Tiago Freitas Apaixonado'
 
 @app.route('/about')
 def about():
