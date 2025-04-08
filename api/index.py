@@ -1,7 +1,5 @@
 from flask import Flask, jsonify, request
-from datetime import datetime, timedelta
 import psycopg2
-import jwt
 
 app = Flask(__name__)
 
@@ -36,7 +34,7 @@ def registar_utilizador(nome, email, password, telefone, tipo):
 
 @app.route('/')
 def home():
-    return 'Hello, World!'
+    return 'Hello, World! Teste'
 
 @app.route('/about')
 def about():
@@ -67,46 +65,3 @@ def registar():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
-@app.route('/login', methods=['POST'])
-def login_endpoint():
-    data = request.get_json()
-    if "email" not in data or "password" not in data:
-        return jsonify({"error": "invalid parameters"}), 400
-
-    user = login(data['email'], data['password'])
-
-    if user is None:
-        return jsonify({"error": "Check credentials"}), 404
-
-    token = jwt.encode(
-        {'id': user['id'], 'exp': datetime.utcnow() + timedelta(minutes=5)}, app.config['SECRET_KEY'], algorithm='HS256'
-    )
-
-    user["token"] = token
-    return jsonify(user), 200
-
-
-def login(email, password):
-    conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
-
-    try:
-        cursor.callproc('autenticacao', (email, password))
-        user_dados = cursor.fetchone()
-
-        if user_dados is None:
-            return None
-
-        user = {
-            "id": user_dados[0],
-            "username": user_dados[1],
-            "tipo": user_dados[2]
-        }
-
-        return user
-    except Exception as error:
-        print("Error while connecting to PostgreSQL", error)
-        return None
-    finally:
-        cursor.close()
-        conn.close()
