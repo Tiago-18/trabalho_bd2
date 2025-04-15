@@ -1,40 +1,37 @@
 import os
 from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
-import psycopg2
 import jwt
+from functools import wraps
+from funcoes import registar_utilizador, login, get_utilizadores, criar_quarto
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mysecretkey')
 
-db_config = {
-    'dbname': 'db2021153107',
-    'user': 'a2021153107',
-    'password': 'a2021153107',
-    'host': 'aid.estgoh.ipc.pt'
-}
+def token_obrigatorio(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
 
+        # O token deve vir no cabeçalho Authorization
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
 
-def registar_utilizador(nome, email, password, telefone, tipo):
-    conn = psycopg2.connect(**db_config)
-    cur = conn.cursor()
+        if not token:
+            return jsonify({'erro': 'Token não fornecido!'}), 401
 
-    try:
-        cur.callproc('criar_utilizador', (nome, email, password, telefone, tipo))
-        result = cur.fetchone()
-        conn.commit()
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            request.user_id = data['id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'erro': 'Token expirado!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'erro': 'Token inválido!'}), 401
 
-        if result:
-            return result[0]
-        else:
-            raise Exception('Erro ao registrar utilizador.')
-    except Exception as e:
-        conn.rollback()
-        raise e
-    finally:
-        cur.close()
-        conn.close()
-
+        return f(*args, **kwargs)
+    return decorator
 
 @app.route('/')
 def home():
@@ -42,15 +39,11 @@ def home():
 
 @app.route('/about')
 def about():
-    conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT * FROM utilizadores;')
-    emp = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-    return jsonify(emp)
+    try:
+        utilizadores = get_utilizadores()
+        return jsonify(utilizadores)
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
 
 @app.route('/registar', methods=['POST'])
 def registar():
@@ -89,29 +82,24 @@ def login_endpoint():
     user["token"] = token
     return jsonify(user), 200
 
-
-def login(email, password):
-    conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
+@app.route('/registar_quarto', methods=['POST'])
+@token_obrigatorio
+def registar_quarto():
+    dados = request.get_json()
 
     try:
-        # Usa SELECT na função, passando os parâmetros
-        cursor.callproc("autenticacao", (email, password))
-        user_dados = cursor.fetchone()
+        mensagem = criar_quarto(
+            dados['numero'],
+            dados['tipo'],
+            dados['capacidade'],
+            dados['preco_noite'],
+            dados['caracteristicas']
+        )
+        return jsonify({'mensagem': mensagem}), 200
 
-        if user_dados is None:
-            return None
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
 
-        user = {
-            "id": user_dados[0],
-            "username": user_dados[1],
-            "tipo": user_dados[2]
-        }
 
-        return user
-    except Exception as error:
-        print("Erro ao conectar ao PostgreSQL:", error)
-        return None
-    finally:
-        cursor.close()
-        conn.close()
+if __name__ == '__main__':
+    app.run(debug=True)
