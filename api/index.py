@@ -8,30 +8,36 @@ from funcoes import registar_utilizador, login, get_utilizadores, criar_quarto
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mysecretkey')
 
-def token_obrigatorio(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
-        token = None
+def autorizacao_tipo(tipo_necessario):
+    def decorator_interno(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            token = None
 
-        # O token deve vir no cabeçalho Authorization
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            if auth_header.startswith("Bearer "):
-                token = auth_header.split(" ")[1]
+            if 'Authorization' in request.headers:
+                auth_header = request.headers['Authorization']
+                if auth_header.startswith("Bearer "):
+                    token = auth_header.split(" ")[1]
 
-        if not token:
-            return jsonify({'erro': 'Token não fornecido!'}), 401
+            if not token:
+                return jsonify({'erro': 'Token não fornecido!'}), 401
 
-        try:
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            request.user_id = data['id']
-        except jwt.ExpiredSignatureError:
-            return jsonify({'erro': 'Token expirado!'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'erro': 'Token inválido!'}), 401
+            try:
+                data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                request.user_id = data['id']
+                request.user_tipo = data['tipo']
 
-        return f(*args, **kwargs)
-    return decorator
+                if data['tipo'] != tipo_necessario:
+                    return jsonify({'erro': 'Permissão negada para este tipo de utilizador!'}), 403
+
+            except jwt.ExpiredSignatureError:
+                return jsonify({'erro': 'Token expirado!'}), 401
+            except jwt.InvalidTokenError:
+                return jsonify({'erro': 'Token inválido!'}), 401
+
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator_interno
 
 @app.route('/')
 def home():
@@ -74,7 +80,7 @@ def login_endpoint():
         return jsonify({"error": "Credenciais Incorretas!"}), 404
 
     token = jwt.encode(
-        {'id': user['id'], 'exp': datetime.utcnow() + timedelta(minutes=5)},
+        {'id': user['id'], 'tipo': user['tipo'], 'exp': datetime.utcnow() + timedelta(minutes=5)},
         app.config['SECRET_KEY'],
         algorithm='HS256'
     )
@@ -83,7 +89,7 @@ def login_endpoint():
     return jsonify(user), 200
 
 @app.route('/registar_quarto', methods=['POST'])
-@token_obrigatorio
+@autorizacao_tipo('Administrador')
 def registar_quarto():
     dados = request.get_json()
 
