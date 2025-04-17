@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
 import jwt
 from functools import wraps
-from funcoes import registar_utilizador, login, get_utilizadores, criar_quarto
+from funcoes import registar_utilizador, login, get_utilizadores, criar_quarto, verificar_disponivilidade
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mysecretkey')
@@ -104,7 +104,21 @@ def registar_quarto():
         return jsonify({'mensagem': mensagem}), 200
 
     except Exception as e:
-        return jsonify({'erro': str(e)}), 500
+        return jsonify({'Erro': str(e)}), 500
+
+@app.route('/verificar_disponivilidade', methods=['GET'])
+@autorizacao_tipo('Cliente')
+def endpoint_verificar_disponivilidade():
+    dados = request.get_json()
+
+    try:
+        mensagem = verificar_disponivilidade(
+            dados['data_entrada'],
+            dados['data_saida']
+        )
+        return jsonify({'mensagem': mensagem}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
 
 
 if __name__ == '__main__':

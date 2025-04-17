@@ -74,7 +74,36 @@ def criar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
+def verificar_disponivilidade(data_entrada, data_saida):
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+    try:
+        cur.callproc('quartos_disponiveis', (data_entrada, data_saida))
+        resultado = cur.fetchall()
+        conn.commit()
 
+        if len(resultado) == 0:
+            return "Não existem quartos disponíveis para as data fornecidas!"
+
+        quartos_disponiveis = []
+        for quarto in resultado:
+            quartos_disponiveis.append({
+                "id": quarto[0],
+                "numero": quarto[1],
+                "tipo": quarto[2],
+                "capacidade": quarto[3],
+                "preco_noite": quarto[4],
+                "estado": quarto[5],
+                "caracteristicas": quarto[6]
+            })
+
+        return quartos_disponiveis
+
+    except Exception as e:
+        print("Erro:", e)
+    finally:
+        cur.close()
+        conn.close()
 
 def get_utilizadores():
     conn = psycopg2.connect(**db_config)
