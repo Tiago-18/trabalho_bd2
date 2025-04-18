@@ -54,7 +54,21 @@ def login(email, password):
         cursor.close()
         conn.close()
 
-def criar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
+def get_utilizadores():
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('SELECT * FROM utilizadores;')
+        users = cursor.fetchall()
+        return users
+    finally:
+        cursor.close()
+        conn.close()
+
+
+#Funções em relação as funcionalidades da tabela quarto
+def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
 
@@ -74,7 +88,7 @@ def criar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
-def verificar_disponivilidade(data_entrada, data_saida):
+def verificar_disponibilidade(data_entrada, data_saida):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
     try:
@@ -105,14 +119,20 @@ def verificar_disponivilidade(data_entrada, data_saida):
         cur.close()
         conn.close()
 
-def get_utilizadores():
+def atualizar_quarto(quarto_id, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
     try:
-        cursor.execute('SELECT * FROM utilizadores;')
-        users = cursor.fetchall()
-        return users
+        cur.execute('CALL atualizar_quarto(%s, %s, %s, %s, %s)', (quarto_id, tipo, capacidade,
+                    preco_noite, caracteristicas))
+        conn.commit()
+        return 'Quarto atualizado com sucesso!'
+
+    except Exception as e:
+        conn.rollback()
+        raise e
     finally:
-        cursor.close()
+        cur.close()
         conn.close()
+

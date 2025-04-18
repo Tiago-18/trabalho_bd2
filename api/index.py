@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
 import jwt
 from functools import wraps
-from funcoes import registar_utilizador, login, get_utilizadores, criar_quarto, verificar_disponivilidade
+from funcoes import registar_utilizador, login, get_utilizadores, registar_quarto, verificar_disponibilidade, atualizar_quarto
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mysecretkey')
@@ -52,7 +52,7 @@ def about():
         return jsonify({'Erro': str(e)}), 500
 
 @app.route('/registar', methods=['POST'])
-def registar():
+def endpoint_registar():
     dados = request.get_json()
 
     try:
@@ -69,7 +69,7 @@ def registar():
         return jsonify({'Erro': str(e)}), 500
 
 @app.route('/login', methods=['POST'])
-def login_endpoint():
+def endpoint_login():
     data = request.get_json()
     if "email" not in data or "password" not in data:
         return jsonify({"error": "invalid parameters"}), 400
@@ -88,13 +88,13 @@ def login_endpoint():
     user["token"] = token
     return jsonify(user), 200
 
-@app.route('/registar_quarto', methods=['POST'])
+@app.route('/quarto/registar', methods=['POST'])
 @autorizacao_tipo('Administrador')
-def registar_quarto():
+def endpoint_registar_quarto():
     dados = request.get_json()
 
     try:
-        mensagem = criar_quarto(
+        mensagem = registar_quarto(
             dados['numero'],
             dados['tipo'],
             dados['capacidade'],
@@ -106,20 +106,38 @@ def registar_quarto():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
-@app.route('/verificar_disponivilidade', methods=['GET'])
+@app.route('/quarto/disponibilidade', methods=['GET'])
 @autorizacao_tipo('Cliente')
-def endpoint_verificar_disponivilidade():
+def endpoint_verificar_disponibilidade():
     dados = request.get_json()
 
     try:
-        mensagem = verificar_disponivilidade(
+        mensagem = verificar_disponibilidade(
             dados['data_entrada'],
             dados['data_saida']
         )
+
         return jsonify({'mensagem': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+@app.route('/quarto/atualizar/<int:quarto_id>', methods=['PUT'])
+@autorizacao_tipo('Administrador')
+def endpoint_atualizar_quarto(quarto_id):
+    dados = request.get_json()
+
+    try:
+        mensagem = atualizar_quarto(
+            quarto_id,
+            dados['tipo'],
+            dados['capacidade'],
+            dados['preco_noite'],
+            dados['caracteristicas'],
+        )
+
+        return jsonify({'mensagem': mensagem}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
