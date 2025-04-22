@@ -136,3 +136,17 @@ def atualizar_quarto(quarto_id, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
+def reservas(data_entrada, data_saida, id_quarto, id_utilizador):
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.execute('CALL realizar_reserva(%s, %s, %s, %s)', (id_quarto, id_utilizador, data_entrada, data_saida))
+        conn.commit()
+        return 'Reserva efetuada com sucesso!'
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cur.close()
+        conn.close()
