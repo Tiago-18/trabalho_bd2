@@ -8,9 +8,6 @@ from funcoes import registar_utilizador, login, get_utilizadores, registar_quart
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mysecretkey')
 
-def handler(environ, start_response):
-    return app(environ, start_response)
-
 def autorizacao_tipo(tipo_necessario):
     def decorator_interno(f):
         @wraps(f)
@@ -162,3 +159,6 @@ def endpoint_reservas():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+def handler(environ, start_response):
+    return app(environ, start_response)
