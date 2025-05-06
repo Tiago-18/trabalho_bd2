@@ -179,7 +179,8 @@ def reservas(data_entrada, data_saida, id_quarto, id_utilizador):
     cur = conn.cursor()
 
     try:
-        cur.execute('CALL realizar_reserva(%s, %s, %s, %s)', (id_quarto, id_utilizador, data_entrada, data_saida))
+        cur.execute('CALL realizar_reserva(%s, %s, %s, %s)',
+                    (id_quarto, id_utilizador, data_entrada, data_saida))
         conn.commit()
         return 'Reserva efetuada com sucesso!'
     except Exception as e:
