@@ -491,9 +491,9 @@ def endpoint_listar_pagamento():
                 "estado": p[2],
                 "utilizadores_id": p[3],
                 "reserva_id": p[4],
-                "data_pagamento": p[5],
+                "data_pagamento": p[5].isoformat(),
             })
-        return jsonify({'reservas_ativas': pagamentos_listar}), 200
+        return jsonify({'Listagem de Pagamentos': pagamentos_listar}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
