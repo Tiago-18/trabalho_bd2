@@ -486,13 +486,12 @@ def endpoint_listar_pagamento():
         pagamentos_listar = []
         for p in pagamento:
             pagamentos_listar.append({
-                "id": p[0],
-                "valor": p[1],
-                "metodo_pagamento": p[2],
-                "estado": p[3],
-                "utilizadores_id": p[4],
-                "reserva_id": p[5],
-                "data_pagamento": p[6],
+                "valor": p[0],
+                "metodo_pagamento": p[1],
+                "estado": p[2],
+                "utilizadores_id": p[3],
+                "reserva_id": p[4],
+                "data_pagamento": p[5],
             })
         return jsonify({'reservas_ativas': pagamentos_listar}), 200
     except Exception as e:
