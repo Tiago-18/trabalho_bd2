@@ -1,4 +1,6 @@
 import os, io
+from crypt import methods
+
 from flask import Flask, jsonify, request, send_file
 from datetime import datetime, timedelta
 import jwt
@@ -463,6 +465,36 @@ def endpoint_realizar_pagamento():
             id_utilizador
         )
         return jsonify({'mensagem': mensagem}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
+
+@app.route('/pagamentos/listar', methods=['GET'])
+@autorizacao_tipo('Cliente')
+def endpoint_listar_pagamento():
+    id_utilizador = request.user_id
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.callproc('listar_pagamentos_por_id', (id_utilizador,))
+        pagamento = cur.fetchall()
+        conn.commit()
+
+        if len(pagamento) == 0:
+            return "Não existem pagamentos registados!"
+
+        pagamentos_listar = []
+        for p in pagamento:
+            pagamentos_listar.append({
+                "id": p[0],
+                "valor": p[1],
+                "metodo_pagamento": p[2],
+                "estado": p[3],
+                "utilizadores_id": p[4],
+                "reserva_id": p[5],
+                "data_pagamento": p[6],
+            })
+        return jsonify({'reservas_ativas': pagamentos_listar}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
