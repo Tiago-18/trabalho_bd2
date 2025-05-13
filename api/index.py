@@ -65,8 +65,6 @@ def registar_utilizador(nome, email, password, telefone, tipo):
     finally:
         cur.close()
         conn.close()
-
-
 def login(email, password):
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
@@ -91,7 +89,6 @@ def login(email, password):
     finally:
         cursor.close()
         conn.close()
-
 def get_utilizadores():
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
@@ -103,8 +100,6 @@ def get_utilizadores():
     finally:
         cursor.close()
         conn.close()
-
-
 #Funções em relação as funcionalidades da tabela quarto
 def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
@@ -307,6 +302,25 @@ def endpoint_reservas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+@app.route('/upload-imagem', methods=['POST'])
+@autorizacao_tipo('Cliente')
+def upload_imagem():
+    if 'imagem' not in request.files or 'quarto_id' not in request.form:
+        return jsonify({'erro': 'Parâmetros inválidos'}), 400
+
+    imagem = request.files['imagem'].read()
+    quarto_id = request.form['quarto_id']
+
+    try:
+        conn = psycopg2.connect(**db_config)
+        cur = conn.cursor()
+        cur.execute("UPDATE quartos SET imagem = %s WHERE id = %s", (psycopg2.Binary(imagem), quarto_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'mensagem': f'Imagem atualizada para o quarto {quarto_id}'}), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
