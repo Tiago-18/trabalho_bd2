@@ -303,7 +303,7 @@ def endpoint_reservas():
         return jsonify({'Erro': str(e)}), 500
 
 @app.route('/upload-imagem', methods=['POST'])
-@autorizacao_tipo('Cliente')
+@autorizacao_tipo('Administrador')
 def upload_imagem():
     if 'imagem' not in request.files or 'quarto_id' not in request.form:
         return jsonify({'erro': 'Parâmetros inválidos'}), 400
