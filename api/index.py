@@ -380,7 +380,7 @@ def endpoint_reservas_listarReservas():
     cur = conn.cursor()
 
     try:
-        cur.callproc('listar_todas_reservas()')
+        cur.callproc('listar_todas_reservas')
         resultado = cur.fetchall()
         conn.commit()
 
