@@ -268,6 +268,15 @@ def endpoint_login():
         algorithm='HS256'
     )
 
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.callproc('atualizar_estado_reservas')
+        conn.commit()
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
+
     user["token"] = token
     return jsonify(user), 200
 
