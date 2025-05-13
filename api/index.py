@@ -328,15 +328,16 @@ def obter_imagem(quarto_id):
     try:
         conn = psycopg2.connect(**db_config)
         cur = conn.cursor()
-        cur.execute("SELECT imagem FROM quarto WHERE id = %s", (quarto_id))
+        cur.execute("SELECT imagem FROM quarto WHERE id = %s", (quarto_id,))
         row = cur.fetchone()
         cur.close()
         conn.close()
 
-        if row and row[0]:
+        if row and isinstance(row, (list, tuple)) and row[0]:
             return send_file(io.BytesIO(row[0]), mimetype='image/jpeg')
         else:
             return jsonify({'erro': 'Imagem não encontrada'}), 404
+
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
