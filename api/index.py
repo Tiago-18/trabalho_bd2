@@ -204,6 +204,22 @@ def pagamentos(reserva_id, utilizador_id):
         cur.close()
         conn.close()
 
+def eliminar_quarto(quarto_id):
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.execute('eliminar_quarto', (quarto_id,))
+        mensagem = cur.fetchone()[0]
+        conn.commit()
+        return mensagem
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cur.close()
+        conn.close()
+
 @app.route('/')
 def home():
     return 'Hello, World!'
@@ -290,7 +306,6 @@ def endpoint_verificar_disponibilidade():
 @autorizacao_tipo('Administrador')
 def endpoint_atualizar_quarto(quarto_id):
     dados = request.get_json()
-
     try:
         mensagem = atualizar_quarto(
             quarto_id,
@@ -303,6 +318,14 @@ def endpoint_atualizar_quarto(quarto_id):
         return jsonify({'mensagem': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
+
+@app.route('/quartos/eliminar/<int:quarto_id>', methods=['DELETE'])
+def endpoint_eliminar_quarto(quarto_id):
+    try:
+        mensagem = eliminar_quarto(quarto_id)
+        return jsonify({'mensagem': mensagem}), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
 
 @app.route('/reservas', methods=['POST'])
 @autorizacao_tipo('Cliente')
