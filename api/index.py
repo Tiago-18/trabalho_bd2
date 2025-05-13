@@ -65,6 +65,7 @@ def registar_utilizador(nome, email, password, telefone, tipo):
     finally:
         cur.close()
         conn.close()
+
 def login(email, password):
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
@@ -89,6 +90,7 @@ def login(email, password):
     finally:
         cursor.close()
         conn.close()
+
 def get_utilizadores():
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
@@ -100,6 +102,7 @@ def get_utilizadores():
     finally:
         cursor.close()
         conn.close()
+
 #Funções em relação as funcionalidades da tabela quarto
 def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
@@ -178,6 +181,23 @@ def reservas(data_entrada, data_saida, id_quarto, id_utilizador):
                     (id_quarto, id_utilizador, data_entrada, data_saida))
         conn.commit()
         return 'Reserva efetuada com sucesso!'
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cur.close()
+        conn.close()
+
+def pagamentos(reserva_id, utilizador_id):
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.callproc('realizar_pagamento_reserva', (reserva_id, utilizador_id))
+        resultado = cur.fetchone()[0];
+        conn.commit()
+
+        return resultado
     except Exception as e:
         conn.rollback()
         raise e
@@ -394,7 +414,7 @@ def endpoint_reservas_listarReservas():
                 'data_checkin': reserva[1].isoformat(),
                 'data_checkout': reserva[2].isoformat(),
                 'valor_total': reserva[3],
-                'data_reserva': reserva[4],
+                'data_reserva': reserva[4].isoformat(),
                 'estado': reserva[5],
                 'cliente_id': reserva[6],
                 'cliente_nome': reserva[7],
@@ -408,6 +428,20 @@ def endpoint_reservas_listarReservas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+@app.route('/pagamentos', methods=['GET'])
+@autorizacao_tipo('Cliente')
+def endpoint_realizar_pagamento():
+    dados = request.get_json()
+    id_utilizador = request.user_id
+
+    try:
+        mensagem = pagamentos(
+            dados['reserva_id'],
+            id_utilizador
+        )
+        return jsonify({'mensagem': mensagem}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
