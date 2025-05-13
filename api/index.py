@@ -1,5 +1,5 @@
-import os
-from flask import Flask, jsonify, request
+import os, io
+from flask import Flask, jsonify, request, send_file
 from datetime import datetime, timedelta
 import jwt
 from functools import wraps
@@ -319,6 +319,24 @@ def upload_imagem():
         cur.close()
         conn.close()
         return jsonify({'mensagem': f'Imagem atualizada para o quarto {quarto_id}'}), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/quartos/<int:quarto_id>/imagem', methods=['GET'])
+@autorizacao_tipo('Administrador')
+def obter_imagem(quarto_id):
+    try:
+        conn = psycopg2.connect(**db_config)
+        cur = conn.cursor()
+        cur.execute("SELECT imagem FROM quarto WHERE id = %s", (quarto_id))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if row and row[0]:
+            return send_file(io.BytesIO(row[0]), mimetype='image/jpeg')
+        else:
+            return jsonify({'erro': 'Imagem não encontrada'}), 404
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
