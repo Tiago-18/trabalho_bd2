@@ -428,7 +428,7 @@ def endpoint_reservas_listarReservas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
-@app.route('/pagamentos', methods=['GET'])
+@app.route('/pagamentos', methods=['POST'])
 @autorizacao_tipo('Cliente')
 def endpoint_realizar_pagamento():
     dados = request.get_json()
