@@ -320,6 +320,7 @@ def endpoint_atualizar_quarto(quarto_id):
         return jsonify({'Erro': str(e)}), 500
 
 @app.route('/quartos/eliminar/<int:quarto_id>', methods=['DELETE'])
+@autorizacao_tipo('Administrador')
 def endpoint_eliminar_quarto(quarto_id):
     try:
         mensagem = eliminar_quarto(quarto_id)
