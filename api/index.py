@@ -209,7 +209,7 @@ def eliminar_quarto(quarto_id):
     cur = conn.cursor()
 
     try:
-        cur.execute('eliminar_quarto', (quarto_id,))
+        cur.callproc('eliminar_quarto', (quarto_id,))
         mensagem = cur.fetchone()[0]
         conn.commit()
         return mensagem
