@@ -314,7 +314,7 @@ def upload_imagem():
     try:
         conn = psycopg2.connect(**db_config)
         cur = conn.cursor()
-        cur.execute("UPDATE quartos SET imagem = %s WHERE id = %s", (psycopg2.Binary(imagem), quarto_id))
+        cur.execute("UPDATE quarto SET imagem = %s WHERE id = %s", (psycopg2.Binary(imagem), quarto_id))
         conn.commit()
         cur.close()
         conn.close()
