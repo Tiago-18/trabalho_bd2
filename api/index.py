@@ -341,5 +341,36 @@ def obter_imagem(quarto_id):
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+@app.route('/reserva/ativas', methods=['GET'])
+@autorizacao_tipo('Cliente')
+def endpoint_reservas_listarAtivas():
+    id_utilizador = request.user_id
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.callproc('listar_reservas_ativas_por_id', (id_utilizador,))
+        resultado = cur.fetchall()
+        conn.commit()
+
+        if len(resultado) == 0:
+            return "Não existem reservas com estado Ativo!"
+
+        reservas_ativas = []
+        for reservas in resultado:
+            reservas_ativas.append({
+                "data_checkin": reservas[0],
+                "data_checkout": reservas[1],
+                "valor_total": reservas[2],
+                "data_reserva": reservas[3],
+                "numero": reservas[4],
+                "tipo": reservas[5],
+                "capacidade": reservas[6],
+                "caracteristicas": reservas[7],
+            })
+        return jsonify({'reservas_ativas': reservas_ativas}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
