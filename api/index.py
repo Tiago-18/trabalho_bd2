@@ -388,21 +388,21 @@ def endpoint_reservas_listarReservas():
             return "Não existem reservas registadas!"
 
         reservas = []
-        for reservas in resultado:
+        for reserva in resultado:
             reservas.append({
-                'reserva_id': reservas[0],
-                'data_checkin': reservas[1].isoformat(),
-                'data_checkout': reservas[2].isoformat(),
-                'valor_total': reservas[3],
-                'data_reserva': reservas[4],
-                'estado': reservas[5],
-                'cliente_id': reservas[6],
-                'cliente_nome': reservas[7],
-                'cliente_email': reservas[8],
-                'numero_quarto': reservas[9],
-                'tipo_quarto': reservas[10],
-                'capacidade': reservas[11],
-                'caracteristicas': reservas[12]
+                'reserva_id': reserva[0],
+                'data_checkin': reserva[1].isoformat(),
+                'data_checkout': reserva[2].isoformat(),
+                'valor_total': reserva[3],
+                'data_reserva': reserva[4],
+                'estado': reserva[5],
+                'cliente_id': reserva[6],
+                'cliente_nome': reserva[7],
+                'cliente_email': reserva[8],
+                'numero_quarto': reserva[9],
+                'tipo_quarto': reserva[10],
+                'capacidade': reserva[11],
+                'caracteristicas': reserva[12]
             })
         return jsonify({'reservas': reservas}), 200
     except Exception as e:
