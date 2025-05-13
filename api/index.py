@@ -160,11 +160,10 @@ def atualizar_quarto(quarto_id, tipo, capacidade, preco_noite, caracteristicas):
     cur = conn.cursor()
 
     try:
-        cur.execute('CALL atualizar_quarto(%s, %s, %s, %s, %s)', (quarto_id, tipo, capacidade,
-                    preco_noite, caracteristicas))
+        cur.callproc('atualizar_quarto',(quarto_id, tipo, capacidade, preco_noite, caracteristicas))
+        mensagem = cur.fetchone()[0]
         conn.commit()
-        return 'Quarto atualizado com sucesso!'
-
+        return mensagem
     except Exception as e:
         conn.rollback()
         raise e
