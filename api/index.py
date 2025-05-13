@@ -372,5 +372,42 @@ def endpoint_reservas_listarAtivas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+@app.route('/reserva', methods=['GET'])
+@autorizacao_tipo('Administrador')
+def endpoint_reservas_listarReservas():
+    id_utilizador = request.user_id
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.callproc('listar_todas_reservas')
+        resultado = cur.fetchall()
+        conn.commit()
+
+        if len(resultado) == 0:
+            return "Não existem reservas com estado Ativo!"
+
+        reservas = []
+        for reservas in resultado:
+            reservas.append({
+                'reserva_id': reservas[0],
+                'data_checkin': reservas[1].isoformat(),
+                'data_checkout': reservas[2].isoformat(),
+                'valor_total': reservas[3],
+                'data_reserva': reservas[4],
+                'estado': reservas[5],
+                'cliente_id': reservas[6],
+                'cliente_nome': reservas[7],
+                'cliente_email': reservas[8],
+                'numero_quarto': reservas[9],
+                'tipo_quarto': reservas[10],
+                'capacidade': reservas[11],
+                'caracteristicas': reservas[12]
+            })
+        return jsonify({'reservas': reservas}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
