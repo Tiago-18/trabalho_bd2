@@ -254,28 +254,40 @@ def endpoint_registar():
 @app.route('/login', methods=['POST'])
 def endpoint_login():
     data = request.get_json()
-    if "email" not in data or "password" not in data:
-        return jsonify({"error": "invalid parameters"}), 400
+
+    if not data or 'email' not in data or 'password' not in data:
+        return jsonify({"erro": "Parâmetros inválidos."}), 400
 
     user = login(data['email'], data['password'])
 
     if user is None:
-        return jsonify({"error": "Credenciais Incorretas!"}), 404
+        return jsonify({"erro": "Credenciais incorretas!"}), 404
 
+    # Gera o token JWT
     token = jwt.encode(
-        {'id': user['id'], 'tipo': user['tipo'], 'exp': datetime.utcnow() + timedelta(minutes=5)},
+        {
+            'id': user['id'],
+            'tipo': user['tipo'],
+            'exp': datetime.utcnow() + timedelta(minutes=5)
+        },
         app.config['SECRET_KEY'],
         algorithm='HS256'
     )
 
-    conn = psycopg2.connect(**db_config)
-    cur = conn.cursor()
-
+    conn = None
     try:
+        conn = psycopg2.connect(**db_config)
+        cur = conn.cursor()
         cur.callproc('atualizar_estado_reservas')
         conn.commit()
+        cur.close()
     except Exception as e:
-        return jsonify({'Erro': str(e)}), 500
+        if conn:
+            conn.rollback()
+        return jsonify({'erro': f'Erro ao atualizar estado das reservas: {str(e)}'}), 500
+    finally:
+        if conn:
+            conn.close()
 
     user["token"] = token
     return jsonify(user), 200
