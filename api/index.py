@@ -178,8 +178,9 @@ def reservas(data_entrada, data_saida, id_quarto, observacoes,id_utilizador):
     try:
         cur.callproc('realizar_reserva',
                     (id_quarto, id_utilizador, data_entrada, data_saida, observacoes))
+        mensagem = cur.fetchone()[0]
         conn.commit()
-        return 'Reserva efetuada com sucesso!'
+        return mensagem
     except Exception as e:
         conn.rollback()
         raise e
