@@ -227,7 +227,6 @@ def eliminar_quarto(quarto_id):
 def upload_imagem(caminho, quarto_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
-
     desenhar = open(caminho, 'rb').read
 
     try:
@@ -396,7 +395,7 @@ def endpoint_reservas():
 
 @app.route('/upload-imagem', methods=['POST'])
 @autorizacao_tipo('Administrador')
-def upload_imagem():
+def endpoint_upload_imagem():
     dados = request.get_json()
 
     try:
