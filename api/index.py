@@ -228,13 +228,14 @@ def upload_imagem(imagem, quarto_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
     try:
-        cur.callproc('upload_imagem_quarto', (quarto_id, imagem))
-        mensagem = cur.fetchone()
+        cur.callproc('upload_imagem_quarto', (quarto_id, psycopg2.Binary(imagem)))
+        resultado = cur.fetchone()
+        mensagem = resultado[0]
         conn.commit()
         return mensagem
     except Exception as e:
         conn.rollback()
-        return str(e), False
+        return str(e)
     finally:
         cur.close()
         conn.close()
@@ -395,26 +396,20 @@ def endpoint_reservas():
 def upload_imagem():
     dados = request.get_json()
 
-    if not dados or 'caminho_imagem' not in dados or 'quarto_id' not in dados:
-        return jsonify({'erro': 'Parâmetros inválidos'}), 400
-
     try:
+        if not os.path.exists(dados['caminho_imagem']):
+            return jsonify({'erro': f'Arquivo não encontrado: {dados["caminho_imagem"]}'}), 404
         with open(dados['caminho_imagem'], 'rb') as arquivo:
             imagem = arquivo.read()
     except FileNotFoundError:
         return jsonify({'erro': f'Arquivo não encontrado: {dados["caminho_imagem"]}'}), 404
     except IOError:
         return jsonify({'erro': f'Erro ao ler o arquivo: {dados["caminho_imagem"]}'}), 500
-
     try:
-        mensagem = upload_imagem(
-            imagem,
-            dados['quarto_id']
-        )
+        mensagem = upload_imagem(imagem, dados['quarto_id'])
         return jsonify({'Sucesso': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
-
 
 @app.route('/quartos/<int:quarto_id>/imagem', methods=['GET'])
 @autorizacao_tipo('Administrador')
