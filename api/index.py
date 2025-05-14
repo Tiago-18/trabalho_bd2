@@ -171,13 +171,13 @@ def atualizar_quarto(quarto_id, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
-def reservas(data_entrada, data_saida, id_quarto, id_utilizador):
+def reservas(data_entrada, data_saida, id_quarto, observacoes,id_utilizador):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
 
     try:
-        cur.execute('CALL realizar_reserva(%s, %s, %s, %s)',
-                    (id_quarto, id_utilizador, data_entrada, data_saida))
+        cur.callproc('realizar_reserva',
+                    (id_quarto, id_utilizador, data_entrada, data_saida, observacoes))
         conn.commit()
         return 'Reserva efetuada com sucesso!'
     except Exception as e:
@@ -344,6 +344,7 @@ def endpoint_atualizar_quarto(quarto_id):
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para eliminar quarto
 @app.route('/quartos/eliminar/<int:quarto_id>', methods=['DELETE'])
 @autorizacao_tipo('Administrador')
 def endpoint_eliminar_quarto(quarto_id):
@@ -364,9 +365,10 @@ def endpoint_reservas():
             dados['data_entrada'],
             dados['data_saida'],
             dados['id_quarto'],
+            dados['observacoes'],
             id_utilizador
         )
-        return jsonify({'mensagem': mensagem}), 200
+        return jsonify({'Sucesso': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
