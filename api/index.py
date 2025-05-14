@@ -427,7 +427,11 @@ def obter_imagem(quarto_id):
 
         imagem_bytes = resultado[0]
 
-        return send_file(io.BytesIO(imagem_bytes))
+        return send_file(
+            io.BytesIO(imagem_bytes),
+            mimetype='image/jpeg',
+        )
+
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
     finally:
