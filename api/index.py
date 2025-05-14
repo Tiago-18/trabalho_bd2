@@ -519,7 +519,7 @@ def endpoint_listar_pagamento():
         for p in pagamento:
             pagamentos_listar.append({
                 "valor": p[0],
-                "metodo_pagamento": p[1],
+                "metodo_pagamento": p[1] if p[1] is not None else "Não Realizado",
                 "estado": p[2],
                 "utilizadores_id": p[3],
                 "reserva_id": p[4],
