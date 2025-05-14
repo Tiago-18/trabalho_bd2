@@ -224,20 +224,19 @@ def eliminar_quarto(quarto_id):
         cur.close()
         conn.close()
 
-def upload_imagem(caminho, quarto_id):
+def upload_imagem(imagem, quarto_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
-    desenhar = open(caminho, 'rb').read
 
     try:
-        cur.callproc('upload_imagem_quarto', (quarto_id, psycopg2.Binary(desenhar)))
+        cur.execute("SELECT upload_imagem_quarto(%s, %s)",
+                    (quarto_id, psycopg2.Binary(imagem)))
         resultado = cur.fetchone()
-        mensagem = resultado[0]
         conn.commit()
-        return mensagem
+        return resultado[0]
     except Exception as e:
         conn.rollback()
-        return str(e)
+        raise e
     finally:
         cur.close()
         conn.close()
@@ -396,13 +395,21 @@ def endpoint_reservas():
 @app.route('/upload-imagem', methods=['POST'])
 @autorizacao_tipo('Administrador')
 def endpoint_upload_imagem():
-    dados = request.get_json()
+    arquivo = request.files['imagem']
+    quarto_id = request.form['quarto_id']
+
+    if arquivo.filename == '':
+        return jsonify({'erro': 'Nenhum arquivo selecionado'}), 400
 
     try:
-        mensagem = upload_imagem(dados['caminho_imagem'], dados['quarto_id'])
+        imagem = arquivo.read()
+
+        # Chamada da função do PostgreSQL
+        mensagem = upload_imagem(imagem, int(quarto_id))
         return jsonify({'Sucesso': mensagem}), 200
+
     except Exception as e:
-        return jsonify({'Erro': str(e)}), 500
+        return jsonify({'erro': str(e)}), 500
 
 @app.route('/quartos/<int:quarto_id>/imagem', methods=['GET'])
 @autorizacao_tipo('Administrador')
