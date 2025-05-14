@@ -392,6 +392,7 @@ def endpoint_reservas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para dar upload de uma imagem em um quarto
 @app.route('/upload-imagem', methods=['POST'])
 @autorizacao_tipo('Administrador')
 def endpoint_upload_imagem():
@@ -417,18 +418,25 @@ def obter_imagem(quarto_id):
     try:
         conn = psycopg2.connect(**db_config)
         cur = conn.cursor()
+
         cur.execute("SELECT imagem FROM quarto WHERE id = %s", (quarto_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
+        resultado = cur.fetchone()
 
-        if row and isinstance(row, (list, tuple)) and row[0]:
-            return send_file(io.BytesIO(row[0]), mimetype='image/jpeg')
-        else:
-            return jsonify({'erro': 'Imagem não encontrada'}), 404
+        if not resultado or not resultado[0]:
+            return jsonify({'erro': 'Imagem não encontrada para este quarto'}), 404
 
+        imagem_bytes = resultado[0]
+        return send_file(
+            io.BytesIO(imagem_bytes),
+            mimetype='image/jpeg',  # ou 'image/png', dependendo do que você armazena
+            as_attachment=False,
+            download_name=f'quarto_{quarto_id}.jpg'
+        )
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
 
 # Endpoint para listar reservas ativas
 @app.route('/reserva/ativas', methods=['GET'])
