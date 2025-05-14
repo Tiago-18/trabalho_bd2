@@ -189,6 +189,7 @@ def reservas(data_entrada, data_saida, id_quarto, observacoes,id_utilizador):
         cur.close()
         conn.close()
 
+# Função para realizar pagamento de uma reserva
 def pagamentos(reserva_id, utilizador_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -414,6 +415,7 @@ def obter_imagem(quarto_id):
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+# Endpoint para listar reservas ativas
 @app.route('/reserva/ativas', methods=['GET'])
 @autorizacao_tipo('Cliente')
 def endpoint_reservas_listarAtivas():
@@ -445,10 +447,10 @@ def endpoint_reservas_listarAtivas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para listar reservas ao Administrador
 @app.route('/reserva', methods=['GET'])
 @autorizacao_tipo('Administrador')
 def endpoint_reservas_listarReservas():
-    id_utilizador = request.user_id
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
 
@@ -481,6 +483,7 @@ def endpoint_reservas_listarReservas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para registar pagamento de Cliente
 @app.route('/pagamentos', methods=['POST'])
 @autorizacao_tipo('Cliente')
 def endpoint_realizar_pagamento():
@@ -496,6 +499,7 @@ def endpoint_realizar_pagamento():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para listar pagamentos de um Cliente
 @app.route('/pagamentos/listar', methods=['GET'])
 @autorizacao_tipo('Cliente')
 def endpoint_listar_pagamento():
@@ -519,7 +523,7 @@ def endpoint_listar_pagamento():
                 "estado": p[2],
                 "utilizadores_id": p[3],
                 "reserva_id": p[4],
-                "data_pagamento": p[5].isoformat(),
+                "data_pagamento": p[5].isoformat() if p[5] is not None else "Não Realizado",
             })
         return jsonify({'Listagem de Pagamentos': pagamentos_listar}), 200
     except Exception as e:
