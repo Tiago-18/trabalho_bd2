@@ -224,6 +224,20 @@ def eliminar_quarto(quarto_id):
         cur.close()
         conn.close()
 
+def upload_imagem(imagem, quarto_id):
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+    try:
+        cur.callproc('upload_imagem_quarto', (quarto_id, imagem))
+        mensagem = cur.fetchone()
+        conn.commit()
+        return mensagem
+    except Exception as e:
+        conn.rollback()
+        return str(e), False
+    finally:
+        cur.close()
+        conn.close()
 @app.route('/')
 def home():
     return 'Hello, World!'
@@ -379,22 +393,28 @@ def endpoint_reservas():
 @app.route('/upload-imagem', methods=['POST'])
 @autorizacao_tipo('Administrador')
 def upload_imagem():
-    if 'imagem' not in request.files or 'quarto_id' not in request.form:
+    dados = request.get_json()
+
+    if not dados or 'caminho_imagem' not in dados or 'quarto_id' not in dados:
         return jsonify({'erro': 'Parâmetros inválidos'}), 400
 
-    imagem = request.files['imagem'].read()
-    quarto_id = request.form['quarto_id']
+    try:
+        with open(dados['caminho_imagem'], 'rb') as arquivo:
+            imagem = arquivo.read()
+    except FileNotFoundError:
+        return jsonify({'erro': f'Arquivo não encontrado: {dados["caminho_imagem"]}'}), 404
+    except IOError:
+        return jsonify({'erro': f'Erro ao ler o arquivo: {dados["caminho_imagem"]}'}), 500
 
     try:
-        conn = psycopg2.connect(**db_config)
-        cur = conn.cursor()
-        cur.execute("UPDATE quarto SET imagem = %s WHERE id = %s", (psycopg2.Binary(imagem), quarto_id))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({'mensagem': f'Imagem atualizada para o quarto {quarto_id}'}), 200
+        mensagem = upload_imagem(
+            imagem,
+            dados['quarto_id']
+        )
+        return jsonify({'Sucesso': mensagem}), 200
     except Exception as e:
-        return jsonify({'erro': str(e)}), 500
+        return jsonify({'Erro': str(e)}), 500
+
 
 @app.route('/quartos/<int:quarto_id>/imagem', methods=['GET'])
 @autorizacao_tipo('Administrador')
