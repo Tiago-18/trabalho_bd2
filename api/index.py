@@ -204,6 +204,7 @@ def pagamentos(reserva_id, utilizador_id):
         cur.close()
         conn.close()
 
+# Função para eliminar quarto
 def eliminar_quarto(quarto_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
