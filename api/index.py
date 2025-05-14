@@ -143,8 +143,7 @@ def verificar_disponibilidade_quartos(data_entrada, data_saida):
                 "tipo": quarto[2],
                 "capacidade": quarto[3],
                 "preco_noite": quarto[4],
-                "estado": quarto[5],
-                "caracteristicas": quarto[6]
+                "caracteristicas": quarto[5]
             })
 
         return quartos_disponiveis
@@ -171,6 +170,7 @@ def atualizar_quarto(quarto_id, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
+# Função para registar nova reserva
 def reservas(data_entrada, data_saida, id_quarto, observacoes,id_utilizador):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -355,6 +355,7 @@ def endpoint_eliminar_quarto(quarto_id):
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+# Endpoint para registar nova reserva
 @app.route('/reservas', methods=['POST'])
 @autorizacao_tipo('Cliente')
 def endpoint_reservas():
