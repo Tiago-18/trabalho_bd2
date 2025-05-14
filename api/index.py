@@ -47,13 +47,13 @@ db_config = {
     'password': 'a2021153107',
     'host': 'aid.estgoh.ipc.pt'
 }
-
+# https://www.geeksforgeeks.org/save-a-image-file-on-a-postgres-database-python/
 def registar_utilizador(nome, email, password, telefone, tipo):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
 
     try:
-        cur.callproc('criar_utilizador', (nome, email, password, telefone, tipo))
+        cur.callproc('registar_utilizador', (nome, email, password, telefone, tipo))
         result = cur.fetchone()
         conn.commit()
 
