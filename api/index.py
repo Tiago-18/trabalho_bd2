@@ -224,11 +224,14 @@ def eliminar_quarto(quarto_id):
         cur.close()
         conn.close()
 
-def upload_imagem(imagem, quarto_id):
+def upload_imagem(caminho, quarto_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
+
+    desenhar = open(caminho, 'rb').read
+
     try:
-        cur.callproc('upload_imagem_quarto', (quarto_id, psycopg2.Binary(imagem)))
+        cur.callproc('upload_imagem_quarto', (quarto_id, psycopg2.Binary(desenhar)))
         resultado = cur.fetchone()
         mensagem = resultado[0]
         conn.commit()
@@ -397,16 +400,7 @@ def upload_imagem():
     dados = request.get_json()
 
     try:
-        if not os.path.exists(dados['caminho_imagem']):
-            return jsonify({'erro': f'Arquivo não encontrado: {dados["caminho_imagem"]}'}), 404
-        with open(dados['caminho_imagem'], 'rb') as arquivo:
-            imagem = arquivo.read()
-    except FileNotFoundError:
-        return jsonify({'erro': f'Arquivo não encontrado: {dados["caminho_imagem"]}'}), 404
-    except IOError:
-        return jsonify({'erro': f'Erro ao ler o arquivo: {dados["caminho_imagem"]}'}), 500
-    try:
-        mensagem = upload_imagem(imagem, dados['quarto_id'])
+        mensagem = upload_imagem(dados['caminho_imagem'], dados['quarto_id'])
         return jsonify({'Sucesso': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
