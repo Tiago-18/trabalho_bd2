@@ -47,47 +47,44 @@ db_config = {
     'password': 'a2021153107',
     'host': 'aid.estgoh.ipc.pt'
 }
-# https://www.geeksforgeeks.org/save-a-image-file-on-a-postgres-database-python/
+
+# Função para registar novo utilizador na aplicação
 def registar_utilizador(nome, email, password, telefone, tipo):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
 
     try:
         cur.callproc('registar_utilizador', (nome, email, password, telefone, tipo))
-        result = cur.fetchone()
+        resultado = cur.fetchone()
         conn.commit()
 
-        if result:
-            return result[0]
-        else:
-            raise Exception('Erro ao registrar utilizador.')
+        return resultado[0]
     except Exception as e:
         conn.rollback()
         raise e
     finally:
         cur.close()
         conn.close()
-
+# Função para realizar login na aplicação
 def login(email, password):
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
-
     try:
-        cursor.callproc("autenticacao", (email, password))
-        user_dados = cursor.fetchone()
+        cursor.callproc("login", (email, password))
+        dados_utilizador = cursor.fetchone()
 
-        if user_dados is None:
+        if dados_utilizador is None:
             return None
 
-        user = {
-            "id": user_dados[0],
-            "email": user_dados[1],
-            "tipo": user_dados[2]
+        utilizador = {
+            "id": dados_utilizador[0],
+            "email": dados_utilizador[1],
+            "tipo": dados_utilizador[2]
         }
 
-        return user
-    except Exception as error:
-        print("Erro ao autenticar utilizador:", error)
+        return utilizador
+    except Exception as erro:
+        print("Erro ao autenticar utilizador:", erro)
         return None
     finally:
         cursor.close()
@@ -105,7 +102,6 @@ def get_utilizadores():
         cursor.close()
         conn.close()
 
-#Funções em relação as funcionalidades da tabela quarto
 def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -234,6 +230,7 @@ def about():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para registar novo utilizador na aplicação
 @app.route('/registar', methods=['POST'])
 def endpoint_registar():
     dados = request.get_json()
@@ -247,33 +244,32 @@ def endpoint_registar():
             dados.get('tipo')
         )
         return jsonify({'Sucesso': mensagem}), 200
-
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint de login na aplicação
 @app.route('/login', methods=['POST'])
 def endpoint_login():
-    data = request.get_json()
+    dados = request.get_json()
 
-    if not data or 'email' not in data or 'password' not in data:
+    if not dados or 'email' not in dados or 'password' not in dados:
         return jsonify({"erro": "Parâmetros inválidos."}), 400
 
-    user = login(data['email'], data['password'])
+    utilizador = login(dados['email'], dados['password'])
 
-    if user is None:
+    if utilizador is None:
         return jsonify({"erro": "Credenciais incorretas!"}), 404
 
-    # Gera o token JWT
     token = jwt.encode(
         {
-            'id': user['id'],
-            'tipo': user['tipo'],
+            'id': utilizador['id'],
+            'tipo': utilizador['tipo'],
             'exp': datetime.utcnow() + timedelta(minutes=5)
         },
         app.config['SECRET_KEY'],
         algorithm='HS256'
     )
-
+    # Verificar
     conn = None
     try:
         conn = psycopg2.connect(**db_config)
@@ -289,8 +285,8 @@ def endpoint_login():
         if conn:
             conn.close()
 
-    user["token"] = token
-    return jsonify(user), 200
+    utilizador["token"] = token
+    return jsonify(utilizador), 200
 
 @app.route('/quarto/registar', methods=['POST'])
 @autorizacao_tipo('Administrador')
