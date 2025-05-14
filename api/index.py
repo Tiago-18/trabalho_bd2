@@ -65,6 +65,7 @@ def registar_utilizador(nome, email, password, telefone, tipo):
     finally:
         cur.close()
         conn.close()
+
 # Função para realizar login na aplicação
 def login(email, password):
     conn = psycopg2.connect(**db_config)
@@ -107,7 +108,7 @@ def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     cur = conn.cursor()
 
     try:
-        cur.callproc('criar_quarto', (numero, tipo, capacidade, preco_noite, caracteristicas))
+        cur.callproc('registar_quarto', (numero, tipo, capacidade, preco_noite, caracteristicas))
         result = cur.fetchone()
         conn.commit()
 
@@ -288,6 +289,7 @@ def endpoint_login():
     utilizador["token"] = token
     return jsonify(utilizador), 200
 
+# Endpoint de registar quarto
 @app.route('/quarto/registar', methods=['POST'])
 @autorizacao_tipo('Administrador')
 def endpoint_registar_quarto():
@@ -301,7 +303,7 @@ def endpoint_registar_quarto():
             dados['preco_noite'],
             dados['caracteristicas']
         )
-        return jsonify({'mensagem': mensagem}), 200
+        return jsonify({'Sucesso': mensagem}), 200
 
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
