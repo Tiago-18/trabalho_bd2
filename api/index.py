@@ -124,6 +124,7 @@ def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
+# Função para verificar disponibilidade dos quartos em um intervalo de datas
 def verificar_disponibilidade_quartos(data_entrada, data_saida):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -431,10 +432,10 @@ def endpoint_reservas_listarAtivas():
         reservas_ativas = []
         for reservas in resultado:
             reservas_ativas.append({
-                "data_checkin": reservas[0],
-                "data_checkout": reservas[1],
+                "data_checkin": reservas[0].isoformat(),
+                "data_checkout": reservas[1].isoformat(),
                 "valor_total": reservas[2],
-                "data_reserva": reservas[3],
+                "data_reserva": reservas[3].isoformat(),
                 "numero": reservas[4],
                 "tipo": reservas[5],
                 "capacidade": reservas[6],
