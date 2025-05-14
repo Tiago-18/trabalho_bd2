@@ -103,6 +103,7 @@ def get_utilizadores():
         cursor.close()
         conn.close()
 
+# Função para registar novo quarto na aplicação
 def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -123,11 +124,11 @@ def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
         cur.close()
         conn.close()
 
-def verificar_disponibilidade(data_entrada, data_saida):
+def verificar_disponibilidade_quartos(data_entrada, data_saida):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
     try:
-        cur.callproc('quartos_disponiveis', (data_entrada, data_saida))
+        cur.callproc('verificar_disponibilidade_quartos', (data_entrada, data_saida))
         resultado = cur.fetchall()
         conn.commit()
 
@@ -147,13 +148,13 @@ def verificar_disponibilidade(data_entrada, data_saida):
             })
 
         return quartos_disponiveis
-
     except Exception as e:
         print("Erro:", e)
     finally:
         cur.close()
         conn.close()
 
+# Função para atualizar dados de um quarto
 def atualizar_quarto(quarto_id, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -308,21 +309,23 @@ def endpoint_registar_quarto():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para verificar disponibilidade de um quarto entre duas datas fornecidas
 @app.route('/quarto/disponibilidade', methods=['GET'])
 @autorizacao_tipo('Cliente')
-def endpoint_verificar_disponibilidade():
+def endpoint_verificar_disponibilidade_quartos():
     dados = request.get_json()
 
     try:
-        mensagem = verificar_disponibilidade(
+        mensagem = verificar_disponibilidade_quartos(
             dados['data_entrada'],
             dados['data_saida']
         )
 
-        return jsonify({'mensagem': mensagem}), 200
+        return jsonify({'Sucesso': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+# Endpoint para atualizar dados de um quarto
 @app.route('/quarto/atualizar/<int:quarto_id>', methods=['PUT'])
 @autorizacao_tipo('Administrador')
 def endpoint_atualizar_quarto(quarto_id):
@@ -336,7 +339,7 @@ def endpoint_atualizar_quarto(quarto_id):
             dados['caracteristicas'],
         )
 
-        return jsonify({'mensagem': mensagem}), 200
+        return jsonify({'Sucesso': mensagem}), 200
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
