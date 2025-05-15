@@ -42,10 +42,10 @@ def autorizacao_tipo(tipo_necessario):
     return decorator_interno
 
 db_config = {
-    'dbname': 'db2021153107',
-    'user': 'a2021153107',
-    'password': 'a2021153107',
-    'host': 'aid.estgoh.ipc.pt'
+    'dbname': os.environ.get('DATABASE_NAME'),
+    'user': os.environ.get('DATABASE_USER'),
+    'password': os.environ.get('DATABASE_PASSWORD'),
+    'host': os.environ.get('DATABASE_HOST')
 }
 
 # Função para registar novo utilizador na aplicação
@@ -68,8 +68,16 @@ def registar_utilizador(nome, email, password, telefone, tipo):
 
 # Função para realizar login na aplicação
 def login(email, password):
+    config = {
+        'dbname': os.getenv('DATABASE_NAME'),
+        'user': email,
+        'password': password,
+        'host': os.getenv('DATABASE_HOST')
+    }
+
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
+    
     try:
         cursor.callproc("login", (email, password))
         dados_utilizador = cursor.fetchone()
@@ -84,12 +92,8 @@ def login(email, password):
         }
 
         return utilizador
-    except Exception as erro:
-        print("Erro ao autenticar utilizador:", erro)
+    except psycopg2.OperationalError:
         return None
-    finally:
-        cursor.close()
-        conn.close()
 
 def get_utilizadores():
     conn = psycopg2.connect(**db_config)
