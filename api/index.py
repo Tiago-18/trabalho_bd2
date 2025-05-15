@@ -68,6 +68,8 @@ def registar_utilizador(nome, email, password, telefone, tipo):
 
 # Função para realizar login na aplicação
 def login(email, password):
+
+    print(email, password)
     config = {
         'dbname': os.getenv('DATABASE_NAME'),
         'user': email,
@@ -75,9 +77,9 @@ def login(email, password):
         'host': os.getenv('DATABASE_HOST')
     }
 
-    conn = psycopg2.connect(**db_config)
+    conn = psycopg2.connect(**config)
     cursor = conn.cursor()
-    
+
     try:
         cursor.callproc("login", (email, password))
         dados_utilizador = cursor.fetchone()
