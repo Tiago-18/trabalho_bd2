@@ -224,6 +224,7 @@ def eliminar_quarto(quarto_id):
         cur.close()
         conn.close()
 
+# Função para realizar upload de imagem no quarto
 def upload_imagem(imagem, quarto_id):
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
@@ -234,6 +235,23 @@ def upload_imagem(imagem, quarto_id):
         resultado = cur.fetchone()
         conn.commit()
         return resultado[0]
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cur.close()
+        conn.close()
+
+# Função para cancelar reserva
+def cancelar_reserva(reserva_id, utilizador_id):
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    try:
+        cur.callproc('cancelar_reserva', (reserva_id, utilizador_id))
+        mensagem = cur.fetchone()[0]
+        conn.commit()
+        return mensagem
     except Exception as e:
         conn.rollback()
         raise e
@@ -364,7 +382,7 @@ def endpoint_atualizar_quarto(quarto_id):
         return jsonify({'Erro': str(e)}), 500
 
 # Endpoint para eliminar quarto
-@app.route('/quartos/eliminar/<int:quarto_id>', methods=['DELETE'])
+@app.route('/quartos/eliminar/<int:quarto_id>', methods=['PUT'])
 @autorizacao_tipo('Administrador')
 def endpoint_eliminar_quarto(quarto_id):
     try:
@@ -392,6 +410,19 @@ def endpoint_reservas():
     except Exception as e:
         return jsonify({'Erro': str(e)}), 500
 
+@app.route('/reservas/<int:reserva_id>/cancelar', methods=['PUT'])
+@autorizacao_tipo('Cliente')
+def endpoint_cancelar_reserva(reserva_id):
+    id_utilizador = request.user_id
+    try:
+        mensagem = cancelar_reserva(
+            reserva_id,
+            id_utilizador
+        )
+        return jsonify({'Sucesso': mensagem}), 200
+    except Exception as e:
+        return jsonify({'Erro': str(e)}), 500
+
 # Endpoint para dar upload de uma imagem em um quarto
 @app.route('/upload-imagem', methods=['POST'])
 @autorizacao_tipo('Administrador')
@@ -412,6 +443,7 @@ def endpoint_upload_imagem():
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+# Endpoint para recuperar imagem do quarto
 @app.route('/quartos/<int:quarto_id>/imagem', methods=['GET'])
 @autorizacao_tipo('Administrador')
 def obter_imagem(quarto_id):
