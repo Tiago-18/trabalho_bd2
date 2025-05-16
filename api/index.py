@@ -69,11 +69,11 @@ def registar_utilizador(nome, email, password, telefone, tipo):
 # Função para realizar login na aplicação
 def login(email, password):
     conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
     try:
-        cursor.callproc("login", (email, password))
-        dados_utilizador = cursor.fetchone()
+        cur.callproc("login", (email, password))
+        dados_utilizador = cur.fetchone()
 
         if dados_utilizador is None:
             return None
@@ -85,8 +85,12 @@ def login(email, password):
         }
 
         return utilizador
-    except psycopg2.OperationalError:
-        return None
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cur.close()
+        conn.close()
 
 def get_utilizadores():
     conn = psycopg2.connect(**db_config)
