@@ -92,18 +92,6 @@ def login(email, password):
         cur.close()
         conn.close()
 
-def get_utilizadores():
-    conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('SELECT * FROM utilizadores;')
-        users = cursor.fetchall()
-        return users
-    finally:
-        cursor.close()
-        conn.close()
-
 # Função para registar novo quarto na aplicação
 def registar_quarto(numero, tipo, capacidade, preco_noite, caracteristicas):
     conn = psycopg2.connect(**db_config)
@@ -263,14 +251,6 @@ def cancelar_reserva(reserva_id, utilizador_id):
 def home():
     return 'Hello, World!'
 
-@app.route('/about')
-def about():
-    try:
-        utilizadores = get_utilizadores()
-        return jsonify(utilizadores)
-    except Exception as e:
-        return jsonify({'Erro': str(e)}), 500
-
 # Endpoint para registar novo utilizador na aplicação
 @app.route('/registar', methods=['POST'])
 def endpoint_registar():
@@ -310,7 +290,7 @@ def endpoint_login():
         app.config['SECRET_KEY'],
         algorithm='HS256'
     )
-    # Verificar
+
     conn = None
     try:
         conn = psycopg2.connect(**db_config)
@@ -437,7 +417,6 @@ def endpoint_upload_imagem():
     try:
         imagem = arquivo.read()
 
-        # Chamada da função do PostgreSQL
         mensagem = upload_imagem(imagem, int(quarto_id))
         return jsonify({'Sucesso': mensagem}), 200
 
